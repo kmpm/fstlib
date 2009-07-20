@@ -1,5 +1,5 @@
 require "test/unit"
-require "libfst"
+require "fstlib"
 class Easy < Test::Unit::TestCase
   COUNTER_START = 20
   
