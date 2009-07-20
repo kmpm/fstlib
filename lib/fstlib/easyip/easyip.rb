@@ -1,4 +1,4 @@
-require 'libfst/easyip/packet'
+require 'fstlib/easyip/packet'
 
 module EasyIP
   class Operand

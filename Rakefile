@@ -14,15 +14,15 @@ rescue LoadError
 end
 
 ensure_in_path 'lib'
-require 'libfst'
+require 'fstlib'
 
 task :default => 'spec:run'
 
-PROJ.name = 'libfst'
+PROJ.name = 'fstlib'
 PROJ.authors = 'Peter Magnusson'
 PROJ.email = 'kmpm@birchroad.net'
 #PROJ.url = 'no url yet'
-PROJ.version = LibFST::VERSION
+PROJ.version = FSTLib::VERSION
 #PROJ.rubyforge.name = 'no name yet'
 PROJ.summary = "Library for Festo Plc communication using CI and Easy-IP"
 PROJ.description = <<END
