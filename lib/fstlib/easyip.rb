@@ -10,7 +10,7 @@ module EasyIP
     FLAG_WORD=1
     INPUT_WORD=2
     OUTPUT_WORD=3
-    RESITERS=4
+    REGISTERS=4
     STRING=11
   end
   
@@ -59,15 +59,11 @@ module EasyIP
       if self.send_type == EasyIP::Operand::STRING
         self.data.unpack("Z*")
       else
-        nil
+        values = self.data.unpack("v" * self.send_size)
       end
-    end
-    
+    end  
   end    
   
-  class WordPayload < BitStruct
-    
-  end
   
   
 end
