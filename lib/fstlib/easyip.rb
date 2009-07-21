@@ -17,6 +17,7 @@ module EasyIP
   # Flags enum for the packet flag 
   class Flags
     EMPTY=0
+    INFO=1
     BIT_OR=2
     BIT_AND=4
     NO_ACK=0x40
