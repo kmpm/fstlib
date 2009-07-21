@@ -1,10 +1,12 @@
 #!/usr/bin/ruby
 require "fstlib"
 require "eventmachine"
+require "mq"
 
 
-module EasyIPServer
+class EasyIPHandler < EventMachine::Connection
   
+  attr_accessor :queue
   
   
   def receive_data data
@@ -21,10 +23,11 @@ module EasyIPServer
       resp.req_size = req.req_size
       resp.payload = [1,2,3,4,5,6,7,8,9,10]
     end
-    puts req.inspect    
-    puts resp.unpack("H*")
+    #puts req.inspect    
+    #puts resp.unpack("H*")
     
     send_data resp
+    @queue.publish(req.to_yaml)
     
   end
   
@@ -37,9 +40,16 @@ if __FILE__ == $0
   host = ''
   port = 995
  
-  EventMachine::run {
-        
-    EventMachine::open_datagram_socket host, port, EasyIPServer
-  }
+  EventMachine::run do
+    amq = MQ.new
+    queue = amq.queue('fst')
+    EventMachine::open_datagram_socket host, port, EasyIPHandler do | handler |
+        handler.queue = queue
+    end
+  end
  
 end
+
+
+
+
