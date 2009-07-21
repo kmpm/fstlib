@@ -1,50 +1,29 @@
 #!/usr/bin/ruby
+$:.unshift File.dirname(__FILE__) 
 require "fstlib"
 require "eventmachine"
 require "mq"
-require "sqlite3"
+require "dbhelper"
+
+# Shutdown AMQP gracefully so messages are published
+Signal.trap('INT') { AMQP.stop{ EM.stop } }
+Signal.trap('TERM'){ AMQP.stop{ EM.stop } }
 
 
 class EasyIPHandler < EventMachine::Connection
   
-  attr_accessor :queue
-  attr_accessor :db
+  attr_accessor :topic
+  attr_accessor :dbhelper
   
-  def get_table(operand)
-    case operand
-      when EasyIP::Operand::FLAG_WORD
-        table='flags'
-      when EasyIP::Operand::INPUT_WORD
-        table='inputs'
-      when EasyIP::Operand::OUTPUT_WORD
-        table='outputs'
-      when EasyIP::Operand::REGISTERS
-        table='registers'
-      when EasyIP::Operand::STRING
-        table='strings' 
-   end
-   return table
-  end
+  
   
   def receive_data data
-    req=EasyIP::Header.new(data)
-    
-    resp = EasyIP::Header.new
+    puts 'receive_data'
+    req=EasyIP::Packet.new(data)
+    @topic.publish(Marshal.dump(req), :key=>'packet.incomming')
+    resp = EasyIP::Packet.new
     resp.counter=req.counter
     resp.flags = EasyIP::Flags::RESP  
-    
-    table=get_table(req.send_type)
-    
-    if req.send_type != EasyIP::Operand::EMPTY
-      values = req.payload
-      id=0
-      values.each do |value|
-        db.execute("INSERT OR REPLACE INTO " + table + " values(?, ?)", id + req.send_offset, value )
-        id+=1
-      end  
-    end
-    
-    
     
     if req.req_type != EasyIP::Operand::EMPTY
       resp.req_type = req.req_type
@@ -52,13 +31,11 @@ class EasyIPHandler < EventMachine::Connection
       resp.req_offset_client = req.req_offset_client
       resp.req_size = req.req_size
       table = get_table(req.req_type)
-      id=0
-      payload=[]
-      db.execute("SELECT id, value FROM " + table + " WHERE id>=?", req.req_offset_server, req.req_offset_server+req.req_size) do |row|
-        p row
-        payload << row[1]
-      end
-      p payload
+   
+      
+      payload = @dbhelper.get_payload(table, req.req_offset_server, req.req_offset_server+req.req_size)
+        
+   
       resp.payload = payload
       puts resp.inspect
     end
@@ -66,7 +43,7 @@ class EasyIPHandler < EventMachine::Connection
     #puts resp.unpack("H*")
     
     send_data resp
-    @queue.publish(req.inspect)
+    
     
   end
   
@@ -79,49 +56,18 @@ if __FILE__ == $0
   host = ''
   port = 995
  
-  sql = <<SQL
-    CREATE TABLE IF NOT EXISTS registers (
-      id INTEGER,
-      value INTEGER,
-      PRIMARY KEY(id ASC)
-    );
-    
-    CREATE TABLE IF NOT EXISTS inputs (
-      id INTEGER,
-      value INTEGER,
-      PRIMARY KEY(id ASC)
-    );
-    
-    CREATE TABLE IF NOT EXISTS outputs (
-      id INTEGER,
-      value INTEGER,
-      PRIMARY KEY(id ASC)
-    );
-    
-    CREATE TABLE IF NOT EXISTS flags (
-      id INTEGER,
-      value INTEGER,
-      PRIMARY KEY(id ASC)
-    );
-    
-    CREATE TABLE IF NOT EXISTS strings (
-      id INTEGER,
-      value TEXT,
-      PRIMARY KEY(id ASC)
-    );
-SQL
-   
-   db = SQLite3::Database.new("test.sq3")
-   db.type_translation = true
-   
-   db.execute_batch(sql)
-  
+  dbhelper = DbHelper.new
+  dbhelper.init_db
   EventMachine::run do
-    amq = MQ.new
-    queue = amq.queue('fst')
+    amqp = AMQP.connect(:user=>'someuser', :pass=>'somepass', :host=>'10.100.0.9', :port=>5672)
+    
+    amq = MQ.new(amqp)
+    topic = amq.topic('festo')
+    puts 'got topic'
     EventMachine::open_datagram_socket host, port, EasyIPHandler do | handler |
-        handler.queue = queue
-        handler.db=db
+        handler.topic = topic
+        handler.dbhelper=dbhelper
+        puts 'running'
     end
   end
  

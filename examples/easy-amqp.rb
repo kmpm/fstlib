@@ -10,9 +10,9 @@ class EasyIPHandler < EventMachine::Connection
   
   
   def receive_data data
-    req=EasyIP::Header.new(data)
+    req=EasyIP::Packet.new(data)
     
-    resp = EasyIP::Header.new
+    resp = EasyIP::Packet.new
     resp.counter=req.counter
     resp.flags = EasyIP::Flags::RESP  
     

@@ -30,7 +30,7 @@ module EasyIP
   # Values for flags, send_type and req_type comes from
   # FSTLib::EasyIP::Flags and FSTLib::EasyIP::Operand
   #
-  class Header < BitStruct
+  class Packet < BitStruct
     default_options :endian => :little
 
     # Defines the flags for the packet
