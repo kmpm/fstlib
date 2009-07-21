@@ -50,11 +50,26 @@ module EasyIP
     rest :data
     
     # Sets data field to whatever payload is wanted
+    # Inputs can be arrays of either strings, unsigned 16-bit values
+    # or a single string
     def payload=(new_payload)
-      self.data = new_payload
+      case new_payload
+        when Array
+          case new_payload[0]
+            when String
+              self.data = new_payload.pack("Z*")
+            else
+              self.data = new_payload.pack("v" * new_payload.length)
+          end
+        else
+          self.data = [new_payload].pack("Z*")
+      end
+      #self.data = new_payload
     end
     
-    # Returns the correct payload depending on send_type
+    # Returns the correct payload depending on send_type and it will always be a Array
+    # EasyIP::Operand::STRING will be give you an array of strings
+    # Every one else will return a array of unsigned 16-bit values.
     def payload
       if self.send_type == EasyIP::Operand::STRING
         self.data.unpack("Z*")
