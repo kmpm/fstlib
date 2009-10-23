@@ -14,12 +14,17 @@ r3 = "'|SMS|APA|Nu har fredrik skitit i det bl\xe5 sk\xe5pet;'"
 r4 = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
 class TestPacket(unittest.TestCase):
+    logging.config.fileConfig('log.ini')
+    logging.debug('Testing started')
     def fixRequest(self):
         return binascii.a2b_hex(binascii.b2a_hex(r2)) + eval(r3) + binascii.a2b_hex(binascii.b2a_hex(r4))
     
     def setUp(self):
-        logging.config.fileConfig('log.ini')
-        logging.debug('Test started')
+        logging.debug('test running')
+    
+    def tearDown(self):
+        logging.debug('test ended')
+
     
     def testdata(self):
         packet = Packet(self.fixRequest())

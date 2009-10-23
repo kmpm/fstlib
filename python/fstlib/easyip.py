@@ -54,7 +54,7 @@ class Packet(object):
     DIRECTION_REQ=2
    
     def __init__(self, data=None):
-        self.logger = logging.getLogger('pyfst.easyip')
+        self.logger = logging.getLogger('fstlib.easyip')
         self.payload = None
         for f in self._FIELDS:
             setattr(self, f, 0)
@@ -122,9 +122,6 @@ class Packet(object):
             return strings
         else:
             return None
-#        if strg[-1] == "\0":
-#            strg = strg[:-1]
-   
     
     def response_errors(self, response):
         errors = []
