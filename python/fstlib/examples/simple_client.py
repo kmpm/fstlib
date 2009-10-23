@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+# coding=utf-8
 from socket import *
-from pyfst import easyip
+from fstlib import easyip
 
 # Set the socket parameters
 host = "localhost"

@@ -1,3 +1,5 @@
+# coding=utf-8
+#Copyright (c) 2009 Peter Magnusson.
 from twisted.internet import reactor, defer, protocol
 from twisted.python import log
 import logging
@@ -6,7 +8,7 @@ class EasyS(protocol.DatagramProtocol):
     def __init__(self):
         self.log = logging.getLogger('easyip.EasyS')
             
-    def startProtovol(self):
+    def startProtocol(self):
         pass
     
     def sendMsg(self, packet, (host, port)):

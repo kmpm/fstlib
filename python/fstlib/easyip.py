@@ -1,4 +1,5 @@
-
+# coding=utf-8
+#Copyright (c) 2009 Peter Magnusson.
 
 from struct import *
 import logging
@@ -49,6 +50,8 @@ class Packet(object):
         'senddata_type', 'senddata_size', 'senddata_offset', 
         'spare2', 'reqdata_type', 'reqdata_size', 'reqdata_offset_server',
         'reqdata_offset_client']
+    DIRECTION_SEND=1
+    DIRECTION_REQ=2
    
     def __init__(self, data=None):
         self.logger = logging.getLogger('pyfst.easyip')
@@ -90,7 +93,38 @@ class Packet(object):
             self.flags, self.error, self.counter,
             self.senddata_type, self.senddata_size)
 
+    def encode_payload(self, data, direction):
+        if direction==self.DIRECTION_SEND:
+            type = self.senddata_type
         
+        if type == Operands.STRINGS:
+            if isinstance(data, list):
+                self.payload=data.join("\x00")
+                count = len(data)
+            elif isinstance(data, str):
+                self.payload = data + "\x00"
+                count = 1
+            else:
+                self.payload = None
+        else:
+            self.payload = None
+    
+    def decode_payload(self, direction):
+        count = 0
+        type = Operands.EMPTY
+        if direction==self.DIRECTION_SEND:
+            count = self.senddata_size
+            type = self.senddata_type
+        
+        if type == Operands.STRINGS:
+            strings = self.payload.split("\0",count)
+            strings.pop()
+            return strings
+        else:
+            return None
+#        if strg[-1] == "\0":
+#            strg = strg[:-1]
+   
     
     def response_errors(self, response):
         errors = []

@@ -1,16 +1,17 @@
 # coding=utf-8
+#Copyright (c) 2009 Peter Magnusson.
 import unittest
 import binascii
 import logging 
 import logging.config
 
-from pyfst.easyip import *
+from fstlib.easyip import *
 
 request = "000085000100000b01000a000000000000000000"
 r2 = "\x00\x00\x85\x00\x01\x00\x00\x0b\x01\x00\n\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 r3 = "'|SMS|APA|Nu har fredrik skitit i det bl\xe5 sk\xe5pet;'"
-r4="\x00"
-#r4 = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+#r4="\x00"
+r4 = "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
 class TestPacket(unittest.TestCase):
     def fixRequest(self):
@@ -69,6 +70,18 @@ class TestPacket(unittest.TestCase):
         packet2 = Factory.response(packet)
         self.assertEqual(packet.counter, packet2.counter)
         self.assertEqual(Flags.RESPONSE, packet2.flags)
+        
+    def test_payload_decoding(self):
+        packet = Packet(self.fixRequest())
+        decoded= packet.decode_payload(Packet.DIRECTION_SEND)
+        self.assertTrue(isinstance(decoded, list))
+        self.assertEqual(1, len(decoded))
+        
+    def test_payload_encoding(self):
+        packet = Packet(self.fixRequest())
+        packet.encode_payload("Hej", Packet.DIRECTION_SEND)
+        self.assertTrue(isinstance(packet.payload, str))
+        self.assertEqual(4, len(packet.payload))
 
 if __name__ == '__main__':
 	unittest.main()
