@@ -1,0 +1,49 @@
+
+# Debug global flag
+# DEBUG
+
+# Protocol's names.
+PROTONAME         Festo EasyIP Protocol
+PROTOSHORTNAME    EasyIP
+PROTOABBREV       easyip
+
+# Specify when the dissector is used.
+PARENT_SUBFIELD          udp.port
+PARENT_SUBFIELD_VALUES   995
+
+
+# Optional parameter.
+# Default value is "no".
+# If you are sure that your packets always contains complete messages, you can uncomment :
+PACKET_CONTAINS_ONLY_COMPLETE_MSG  yes
+
+# Optional parameter.
+# Default value is "no".
+# If you are sure that your packets always contains only 1 message, you can uncomment :
+# PACKET_CONTAINS_ONLY_1_MSG         yes
+
+
+
+# All following attributes refers to what is defined
+#  into PROTO_TYPE_DEFINITIONS section,
+#  so what is inside <file>.desc
+
+
+# Message's header type.
+# The message must begin by the header.
+# The header must contains MSG_ID_FIELD_NAME and any MSG_SUMMARY_SUBSIDIARY_FIELD_NAMES.
+MSG_HEADER_TYPE       T_easyip_header
+MSG_ID_FIELD_NAME     flags
+#MSG_TOTAL_LENGTH     20
+MSG_MAIN_TYPE         T_easyip_msg_switch(flags)
+
+
+# Definitions of the packet's format.
+PROTO_TYPE_DEFINITIONS
+
+# Debug flag only for interpreting the types
+# DEBUG
+
+include  easyip.fdesc ;
+
+

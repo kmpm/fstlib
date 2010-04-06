@@ -1,0 +1,90 @@
+enum8  T_easyip_flag
+{
+  easyip_request       0x0
+  easyip_nack				0x40
+  easyip_ack       0x80
+  
+  # 0x02 = Bit_OR
+  # 0x04 = Bit_AND
+}
+
+enum8 T_easyip_type
+{
+    easyip_operand_empty      0
+    easyip_operand_flagword   1
+    easyip_operand_inputword  2
+    easyip_operand_outputword 3
+    easyip_operand_register   4
+    easyip_operand_strings    11
+}
+
+#If operand_strings then reqdata_size is the number of words returned. 
+#doesn't have anything to do with anything else.
+#only returns 1 string regardles of the reqdata_size in the request
+
+struct T_easyip_header
+{
+  byte_order          little_endian;
+  T_easyip_flag       flags;
+  uint8               error;
+  uint16              counter;
+  uint16              index;
+  uint8               spare;
+  T_easyip_type       senddata_type;
+  uint16              senddata_size;
+  uint16              senddata_offset;
+  uint8               spare2;
+  T_easyip_type       reqdata_type;
+  uint16              reqdata_size;
+  uint16              reqdata_offset_server;
+  uint16              reqdata_offset_client;
+}
+
+
+struct T_easyip_msg_request
+{
+    T_easyip_header    Header ;
+    if (senddata_type != T_easyip_type::easyip_operand_empty)
+    {
+    	if (senddata_type == T_easyip_type::easyip_operand_strings)
+    	{
+    		string[1]	Payload;
+    		raw(*)   padding ;
+    	}
+    	else
+    	{
+    		uint16{d=bin}[senddata_size]   Payload;
+    	}
+    }
+    
+}
+
+struct T_easyip_msg_response
+{
+    T_easyip_header    Header ;
+    if (reqdata_type != T_easyip_type::easyip_operand_empty)
+    {
+    	if (reqdata_type == T_easyip_type::easyip_operand_strings)
+    	{
+    		string[1]	Payload;
+    		raw(*)   padding ;
+    	}
+    	else
+    	{
+    		uint16{d=bin}[reqdata_size]   Payload;
+    	}
+    }
+    
+}
+
+
+
+switch T_easyip_msg_switch    T_easyip_flag
+{
+    case T_easyip_flag::easyip_request :  T_easyip_msg_request "" ;
+    case T_easyip_flag::easyip_ack :  T_easyip_msg_response "" ;
+    default :
+    T_easyip_header    Header ;
+    raw(*)   the_end_of_my_message ;
+}
+
