@@ -1,5 +1,5 @@
 # coding=utf-8
-#Copyright (c) 2009 Peter Magnusson.
+#Copyright (c) 2009-2010 Peter Magnusson.
 
 from struct import *
 import logging
@@ -7,6 +7,9 @@ import logging
 EASYIP_PORT=995
 
 class Flags():
+    """
+    EasyIP flag enum
+    """
     EMPTY = 0
     BIT_OR=0x2
     BIT_AND=0x4
@@ -14,6 +17,9 @@ class Flags():
     RESPONSE=0x80
 
 class Operands():
+    """
+    EasyIP Operands enum
+    """
     EMPTY=0
     FLAG_WORD=1
     INPUT_WORD=2
@@ -22,9 +28,14 @@ class Operands():
     STRINGS=11
 
 class Factory():
-    
+    """
+    A simple protocol factory to help generate valid packets
+    """
     @classmethod
     def send_string(cls, counter, string, string_no):
+        """
+        Send a single string to be stored at string_no
+        """
         packet = Packet(counter=counter,
                         senddata_type=Operands.STRINGS,
                         senddata_offset = string_no)
@@ -36,9 +47,11 @@ class Factory():
     
     @classmethod
     def send_flagword(cls, counter, words, offset=0):
+        """
+        Send flagword(s) to be stored starting att Flagword offset
+        """
         packet = Packet()
         packet.counter = counter
-        packet.error=0
         packet.senddata_type = Operands.FLAG_WORD
         
         packet.senddata_offset = offset
@@ -49,6 +62,9 @@ class Factory():
     
     @classmethod
     def req_flagword(cls, counter, count, offset=0):
+        """
+        Request 'count' flagwords starting at flagword 'offset'
+        """
         packet = Packet()
         packet.counter=counter
         packet.error=0
@@ -58,17 +74,23 @@ class Factory():
         return packet
     
     @classmethod
-    def req_string(cls, counter, offset=0):
+    def req_string(cls, counter, string_no):
+        """
+        Request string at 'string_no'
+        """
         packet = Packet()
         packet.counter=counter
-        packet.error=0
         packet.reqdata_type=Operands.STRINGS
         packet.reqdata_size=1
-        packet.reqdata_offset_server = offset
+        packet.reqdata_offset_server = string_no
         return packet
     
     @classmethod
     def response(cls, in_packet, error=0):
+        """
+        Create a base response packet matching 'in_packet'
+        Payload has to be done manually
+        """
         packet = Packet()
         packet.counter = in_packet.counter
         packet.error=error
