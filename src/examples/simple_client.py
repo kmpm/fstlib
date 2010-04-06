@@ -18,9 +18,21 @@ class SimpleClient(object):
         self.counter = 0
         self.addr = (host,easyip.EASYIP_PORT)
         
+    def send_packet(self, packet):
+        data = packet.pack()
+        if(self.UDPSock.sendto(data,self.addr)):
+                print "Sending message '",packet,"'....."
+        print "Waiting for response..."
+        data,srvaddr = self.UDPSock.recvfrom(buf)
+        resp = easyip.Packet(data)
+        print "%s as response" % resp
+        print "errors=%r" % packet.response_errors(resp)
+        return resp    
+
     def request_fw(self):
-        print "Flagwords to get"
+        
         while 1:
+            print "Flagwords to get. Empty to exit"
             count = raw_input('Count:>> ')
             
             if not count or int(count)==0:
@@ -38,7 +50,7 @@ class SimpleClient(object):
                     i += 1
     
     def send_fw(self):
-        print "Flagword(s) to send"
+        print "Flagword(s) to send. Empty to continue."
         datas = []
         while 1:
             data = raw_input('[%s]>> ' % len(datas))
@@ -55,8 +67,9 @@ class SimpleClient(object):
 
         
     def request_string(self):
-        print "String to get"
+        
         while 1:
+            print "String to get. Empty to exit."
             offset = raw_input('Offset:>> ')
             
             if not offset:
@@ -71,23 +84,13 @@ class SimpleClient(object):
                 for v in values:
                     print "Value %d=%s" % (i, v)
                     i += 1
-                    
-        
-    def send_packet(self, packet):
-        data = packet.pack()
-        if(self.UDPSock.sendto(data,self.addr)):
-                print "Sending message '",packet,"'....."
-        data,srvaddr = self.UDPSock.recvfrom(buf)
-        resp = easyip.Packet(data)
-        print "%s as response" % resp
-        print "errors=%r" % packet.response_errors(resp)
-        return resp
-        
+                        
         
     def send(self):
         # Send message
-        print "What to send"
+        
         while 1:
+            print "String to send. Empty to exit"
             data = raw_input('>> ')
             if not data:
                 #UDPSock.sendto(data, addr)

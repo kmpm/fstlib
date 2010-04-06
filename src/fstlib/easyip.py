@@ -25,12 +25,10 @@ class Factory():
     
     @classmethod
     def send_string(cls, counter, string, string_no):
-        packet = Packet()
-        packet.counter = counter
-        packet.error=0
-        packet.senddata_type = Operands.STRINGS
-        
-        packet.senddata_offset = string_no
+        packet = Packet(counter=counter,
+                        senddata_type=Operands.STRINGS,
+                        senddata_offset = string_no)
+       
         count = packet.encode_payload(string, packet.DIRECTION_SEND)
         packet.senddata_size = count
         assert count
@@ -90,7 +88,7 @@ class Packet(object):
     DIRECTION_SEND=1
     DIRECTION_REQ=2
    
-    def __init__(self, data=None):
+    def __init__(self, data=None, **kwargs):
         self.logger = logging.getLogger('fstlib.easyip')
         self.payload = None
         for f in self._FIELDS:
@@ -100,6 +98,10 @@ class Packet(object):
             self.logger.debug("len(data)=%d" % len(data))
             self.unpack(data);
             self.payload=data[calcsize(self.HEADER_FORMAT):]
+        else:
+            for key in kwargs:
+                if key in Packet._FIELDS:
+                    setattr(self,key, kwargs[key])
 
     def unpack(self, data):
         self.logger.debug("Unpacking data")
@@ -126,9 +128,9 @@ class Packet(object):
     
     
     def __str__(self):
-        return "Packet(flags=%i error=%i counter=%i send_type=%i send_size=%i)" %  (
+        return "Packet(flags=%i error=%i counter=%i send_type=%i request_type=%i)" %  (
             self.flags, self.error, self.counter,
-            self.senddata_type, self.senddata_size)
+            self.senddata_type, self.reqdata_type)
 
     def encode_payload(self, data, direction):
         count = None
