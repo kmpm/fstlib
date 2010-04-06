@@ -4,7 +4,7 @@
 from struct import *
 import logging
 
-EASYIP_PORT=992
+EASYIP_PORT=995
 
 class Flags():
     EMPTY = 0
@@ -27,11 +27,33 @@ class Factory():
     def send_string(cls, counter, string, string_no):
         packet = Packet()
         packet.counter = counter
-        packet.payload = string
         packet.error=0
         packet.senddata_type = Operands.STRINGS
-        packet.senddata_size = 1
+        
         packet.senddata_offset = string_no
+        count = packet.encode_payload(string, packet.DIRECTION_SEND)
+        packet.senddata_size = count
+        assert count
+        return packet
+    
+    @classmethod
+    def req_flagword(cls, counter, count, offset=0):
+        packet = Packet()
+        packet.counter=counter
+        packet.error=0
+        packet.reqdata_type=Operands.FLAG_WORD
+        packet.reqdata_size=count
+        packet.reqdata_offset_server = offset
+        return packet
+    
+    @classmethod
+    def req_string(cls, counter, offset=0):
+        packet = Packet()
+        packet.counter=counter
+        packet.error=0
+        packet.reqdata_type=Operands.STRINGS
+        packet.reqdata_size=1
+        packet.reqdata_offset_server = offset
         return packet
     
     @classmethod
@@ -42,6 +64,8 @@ class Factory():
         packet.flags = Flags.RESPONSE
         return packet
 
+class PayloadEncodingException(Exception):
+    pass
 
 class Packet(object):
     #L/H
@@ -94,20 +118,23 @@ class Packet(object):
             self.senddata_type, self.senddata_size)
 
     def encode_payload(self, data, direction):
+        count = None
         if direction==self.DIRECTION_SEND:
             type = self.senddata_type
         
         if type == Operands.STRINGS:
             if isinstance(data, list):
-                self.payload=data.join("\x00")
-                count = len(data)
-            elif isinstance(data, str):
-                self.payload = data + "\x00"
+                #self.payload="\x00".join(data)
+                #count = len(data)
+                raise PayloadEncodingException("Payload can not be a list object!")
+            elif isinstance(data, str) or isinstance(data, unicode):
+                self.payload = str(data) + "\x00"
                 count = 1
             else:
                 self.payload = None
         else:
             self.payload = None
+        return count
     
     def decode_payload(self, direction):
         count = 0
@@ -115,13 +142,19 @@ class Packet(object):
         if direction==self.DIRECTION_SEND:
             count = self.senddata_size
             type = self.senddata_type
+        else:
+            count = self.reqdata_size
+            type = self.reqdata_type
         
         if type == Operands.STRINGS:
             strings = self.payload.split("\0",count)
             strings.pop()
             return strings
         else:
-            return None
+            payload_format = '<' + "H "*count
+            print "payload_format=%s" % payload_format
+            return unpack(payload_format, self.payload)
+    
     
     def response_errors(self, response):
         errors = []
