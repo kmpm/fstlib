@@ -37,6 +37,19 @@ class Factory():
         return packet
     
     @classmethod
+    def send_flagword(cls, counter, words, offset=0):
+        packet = Packet()
+        packet.counter = counter
+        packet.error=0
+        packet.senddata_type = Operands.FLAG_WORD
+        
+        packet.senddata_offset = offset
+        count = packet.encode_payload(words, packet.DIRECTION_SEND)
+        packet.senddata_size = count
+        assert count
+        return packet
+    
+    @classmethod
     def req_flagword(cls, counter, count, offset=0):
         packet = Packet()
         packet.counter=counter
@@ -119,21 +132,28 @@ class Packet(object):
 
     def encode_payload(self, data, direction):
         count = None
+        type = None
         if direction==self.DIRECTION_SEND:
             type = self.senddata_type
         
-        if type == Operands.STRINGS:
+        if not type:
+            self.payload = None
+        elif type == Operands.STRINGS:
             if isinstance(data, list):
-                #self.payload="\x00".join(data)
-                #count = len(data)
-                raise PayloadEncodingException("Payload can not be a list object!")
+                raise PayloadEncodingException("String payload can not be a list object!")
             elif isinstance(data, str) or isinstance(data, unicode):
                 self.payload = str(data) + "\x00"
                 count = 1
             else:
                 self.payload = None
         else:
-            self.payload = None
+            if not isinstance(data, list):
+                data = [data,]
+            for d in data:
+                if d>65535 or d<0: raise PayloadEncodingException("Word must be within 0 - 65535")
+            count = len(data)
+            payload_format = '<' + "H "*count
+            self.payload = pack(payload_format, *data)
         return count
     
     def decode_payload(self, direction):
@@ -152,7 +172,7 @@ class Packet(object):
             return strings
         else:
             payload_format = '<' + "H "*count
-            print "payload_format=%s" % payload_format
+            #print "payload_format=%s" % payload_format
             return unpack(payload_format, self.payload)
     
     
