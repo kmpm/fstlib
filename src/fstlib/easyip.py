@@ -195,9 +195,13 @@ class Packet(object):
             strings.pop()
             return strings
         else:
-            payload_format = '<' + "H "*count
+            payload_format = '<' + ("H " * count)
             #print "payload_format=%s" % payload_format
-            return unpack(payload_format, self.payload)
+            try:
+                return unpack(payload_format, self.payload[:count*2])
+            except:
+                print "payload_format='%s'" % payload_format
+                raise
     
     
     def response_errors(self, response):

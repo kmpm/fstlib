@@ -19,10 +19,12 @@ class SimpleClient(object):
         self.addr = (host,easyip.EASYIP_PORT)
         
     def send_packet(self, packet):
+        self.UDPSock.settimeout(5)
         data = packet.pack()
         if(self.UDPSock.sendto(data,self.addr)):
                 print "Sending message '",packet,"'....."
         print "Waiting for response..."
+        
         data,srvaddr = self.UDPSock.recvfrom(buf)
         resp = easyip.Packet(data)
         print "%s as response" % resp
