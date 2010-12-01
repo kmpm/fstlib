@@ -1,8 +1,47 @@
-# coding=utf-8
-#Copyright (c) 2009-2010 Peter Magnusson.
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+"""Functions and classes for generating FESTO EasyIP Packets
 
-from struct import *
+Packet is the main class which is the most important
+Flags and Operands are enum classes just to keep track of various constants
+"""
+__autor__ = "Peter Magnusson"
+__copyright__ = "Copyright 2009-2010, Peter Magnusson <peter@birchroad.net>"
+__version__ = "1.0.0"
+__all__ = ['Flags', 'Operands', 'Factory', 'PayloadEncodingException', 'PayloadDecodingException', 'Packet']
+
+#Copyright (c) 2009-2010 Peter Magnusson.
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without modification,
+#are permitted provided that the following conditions are met:
+#
+#    1. Redistributions of source code must retain the above copyright notice, 
+#       this list of conditions and the following disclaimer.
+#    
+#    2. Redistributions in binary form must reproduce the above copyright 
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+#    3. Neither the name of Peter Magnusson nor the names of its contributors may be used
+#       to endorse or promote products derived from this software without
+#       specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+#ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+#LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+#ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+from struct import pack, unpack, calcsize
 import logging
+import sys
 
 EASYIP_PORT=995
 
@@ -29,7 +68,7 @@ class Operands():
 
 class Factory():
     """
-    A simple protocol factory to help generate valid packets
+    A simple protocol factory to help generate valid packets for common use-cases
     """
     @classmethod
     def send_string(cls, counter, string, string_no):
@@ -100,7 +139,12 @@ class Factory():
 class PayloadEncodingException(Exception):
     pass
 
+class PayloadDecodingException(Exception):
+    pass
+
 class Packet(object):
+    """Class for managing EasyIP packet
+    """
     #L/H
     HEADER_FORMAT='<B B H H B B H H B B H H H'
     _FIELDS=['flags', 'error', 'counter', 'index1', 'spare1', 
@@ -126,6 +170,7 @@ class Packet(object):
                     setattr(self,key, kwargs[key])
 
     def unpack(self, data):
+        """Unpacks a packet comming in a string buffer"""
         self.logger.debug("Unpacking data")
         data = unpack(self.HEADER_FORMAT, data[0:calcsize(self.HEADER_FORMAT)])
         header=list(data)
@@ -166,6 +211,7 @@ class Packet(object):
             if isinstance(data, list):
                 raise PayloadEncodingException("String payload can not be a list object!")
             elif isinstance(data, str) or isinstance(data, unicode):
+                #all strings must be zero terminated
                 self.payload = str(data) + "\x00"
                 count = 1
             else:
@@ -196,12 +242,11 @@ class Packet(object):
             return strings
         else:
             payload_format = '<' + ("H " * count)
-            #print "payload_format=%s" % payload_format
             try:
                 return unpack(payload_format, self.payload[:count*2])
-            except:
-                print "payload_format='%s'" % payload_format
-                raise
+            except Exception as e:
+                raise PayloadDecodingException("Failed to decode payload with format='%s'" % payload_format, e), None, sys.exc_info()[2]
+                
     
     
     def response_errors(self, response):
