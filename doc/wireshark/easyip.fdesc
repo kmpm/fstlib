@@ -1,4 +1,4 @@
-# Copyright (c) 2010 Peter Magnusson
+# Copyright (c) 2010 Peter Magnusson <peter@birchroad.net>
 
 
 #The 2 MSB in the first byte sets the type of message
