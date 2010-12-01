@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
-from socket import *
+from socket import socket, AF_INET, SOCK_DGRAM
 from fstlib import easyip
 from carrot.messaging import Publisher
 from carrot.connection import BrokerConnection
